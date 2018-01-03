@@ -1,0 +1,15 @@
+## ignore directory
+/__pycache__
+
+## using direcetory
+#/kiie-2017f/
+#/kiie-2017f/data
+#/kiie-2017f/data_json
+#/kiie-2017f/dataset_model
+#/kiie-2017f/gephi_input
+#/kiie-2017f/res_tmp
+
+## ignore file format
+/kiie-2017f/*.csv
+/kiie-2017f/*.pickle
+/kiie-2017f/*.json
