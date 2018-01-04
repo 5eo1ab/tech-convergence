@@ -4,6 +4,7 @@
 ## ignore directory
 /__pycache__
 /data/raw_data
+/data/matrix_data
 
 ## ignore script
 hello.py
