@@ -1,5 +1,9 @@
+## private info
+/data/uspto_db_connection_info.json
+
 ## ignore directory
 /__pycache__
+/data/raw_data
 
 ## using direcetory
 #/kiie-2017f/
