@@ -1,0 +1,4 @@
+{"patent09to17": "SELECT patent_no, issue_year FROM T_PATENT WHERE issue_year>2008 ",
+"pat2t_class": "SELECT patent_no, sector, class, subclass FROM T_CLASS WHERE class_type='IPC' AND patent_no IN ",
+"raw_t_citing": "SELECT patent_no, cited_patent_no FROM T_CITING "
+}

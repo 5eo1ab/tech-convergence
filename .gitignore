@@ -5,6 +5,9 @@
 /__pycache__
 /data/raw_data
 
+## ignore script
+hello.py
+
 ## using direcetory
 #/kiie-2017f/
 #/kiie-2017f/data
