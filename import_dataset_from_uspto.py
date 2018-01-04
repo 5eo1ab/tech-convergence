@@ -38,6 +38,6 @@ if __name__ == '__main__':
 		set_df_result(cnx, stmt, ['patent_no', '_sector', '_class', '_subclass'], 't_class')
 	elif obj_table == "3":
 		stmt = DIC_SQL["raw_t_citing"]
-		set_df_result(cnx, stmt, ['patent_no, cited_patent_no'], 'raw_t_citing')
+		set_df_result(cnx, stmt, ['patent_no', 'cited_patent_no'], 'raw_t_citing')
 	else: pass
 	cnx.close()
