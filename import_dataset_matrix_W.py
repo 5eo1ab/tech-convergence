@@ -22,8 +22,8 @@ if __name__ == '__main__':
     
     matrix_by_p = pd.crosstab(t_class_by_p['patent_no'], t_class_by_p['subclass'])
     print(matrix_by_p.head())
-    print(matrix_by_p.shape)
+    print(matrix_by_p.shape) # p1, p2, p3 = (612154, 1114), (829412, 920), (880695, 630)
     
     matrix_by_p.to_pickle('./data/matrix_data/matrix_W_p{}.pickle'.format(period))
-    matrix_by_p.to_csv('./data/matrix_data/matrix_W_p{}.csv'.format(period), index=False)
+    #matrix_by_p.to_csv('./data/matrix_data/matrix_W_p{}.csv'.format(period), index=False)
     
