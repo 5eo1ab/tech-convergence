@@ -5,6 +5,7 @@
 /__pycache__
 /data/raw_data
 /data/matrix_data
+/data/pair_data
 
 ## ignore script
 hello.py
@@ -22,3 +23,5 @@ untitled*.py
 /kiie-2017f/*.csv
 /kiie-2017f/*.pickle
 /kiie-2017f/*.json
+/data/*.xlsx
+
