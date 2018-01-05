@@ -23,5 +23,5 @@ untitled*.py
 /kiie-2017f/*.csv
 /kiie-2017f/*.pickle
 /kiie-2017f/*.json
-/data/*.xlsx
+/data/groupby_data/*.xlsx
 
