@@ -15,7 +15,7 @@ def set_df_result(__conn__, __query__, list_columns, out_file_nm):
 	table_rows = import_raw_dataset.get_query_result(__conn__, __query__)
 	res, f_path = df(table_rows, columns=list_columns), './data/raw_data/{}.csv'.format(out_file_nm)
 	if os.path.exists(f_path):
-		f_path = "{}_mod.csv".format(f_path.split('.csv')[0])
+		os.rename(f_path, "{}__backup.csv".format(f_path.split('.csv')[0]))
 	res.to_csv(f_path, index=False)
 	print(res.tail())
 	return None
