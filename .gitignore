@@ -3,6 +3,7 @@
 
 ## ignore directory
 /__pycache__
+/.idea/*
 /data/raw_data
 /data/matrix_data
 /data/pair_data

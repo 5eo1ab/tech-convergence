@@ -32,10 +32,9 @@ if __name__ == '__main__':
 	elif obj_table == "2":
 		t_patent = pd.read_csv('./data/raw_data/t_patent.csv')
 		list_p_no = t_patent["patent_no"].tolist()
-		print(len(list_p_no))
-		obj_table = input("Which table? (t_class=1, t_citing=2, t_cited=3): ")
+		print("Count of patents: ", len(list_p_no))
 		stmt = DIC_SQL["pat2t_class"] + "{};".format(tuple(list_p_no))
-		set_df_result(cnx, stmt, ['patent_no', '_sector', '_class', '_subclass'], 't_class')
+		set_df_result(cnx, stmt, ['patent_no', '_sector', '_class', '_subclass', '_group', '_subgroup'], 't_class')
 	elif obj_table == "3":
 		stmt = DIC_SQL["raw_t_citing"]
 		set_df_result(cnx, stmt, ['patent_no', 'cited_patent_no'], 'raw_t_citing')
