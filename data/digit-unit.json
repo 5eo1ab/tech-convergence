@@ -1,0 +1,7 @@
+{"message": "Which merging unit? (sector=1, class=2, subclass=3, group=4, subclass=5): ",
+  "1": "sector",
+  "2": "class",
+  "3": "subclass",
+  "4": "group",
+  "5": "subgroup"
+}
