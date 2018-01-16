@@ -13,7 +13,7 @@ from pandas import DataFrame as df
 
 if __name__ == '__main__':
     
-    t_class = pd.read_csv('./data/raw_data/merged_t_class.csv')
+    t_class = pd.read_csv('./data/raw_data/t_class_merging.csv')
     print(t_class.head())
 
     period = int(input("Which period ? (09~11=1, 12~14=2, 15~17=3): "))
