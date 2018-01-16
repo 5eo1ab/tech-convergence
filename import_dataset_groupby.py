@@ -31,6 +31,7 @@ if __name__ == '__main__':
 
         df_gby_year.to_csv('./data/groupby_data/gby_count_by_year.csv', index=False)
         print("Export df groupby year to CSV")
+
     else: pass
 
     obj_unit = input(DIC_UNIT['message'])
@@ -63,3 +64,12 @@ if __name__ == '__main__':
     df_obj_by_period.to_csv('./data/groupby_data/pivot_{}_by_period.csv'.format(DIC_UNIT[obj_unit]), index=False)
     df_obj_by_year.to_csv('./data/groupby_data/pivot_{}_by_year.csv'.format(DIC_UNIT[obj_unit]), index=False)
 
+
+    df_summary = df({'{}_ALL'.format(DIC_UNIT[obj_unit]):
+        df_gby_count[df_gby_count.columns[-1]].describe(),
+        })
+    for idx in df_obj_by_period.columns[1:]:
+        key_nm = '{}_P{}'.format(DIC_UNIT[obj_unit], idx)
+        df_summary[key_nm] = df_obj_by_period[df_obj_by_period[idx]>0][idx].describe()
+    df_summary.to_csv('./data/groupby_data/summary_{}.csv'.format(DIC_UNIT[obj_unit]))
+    
