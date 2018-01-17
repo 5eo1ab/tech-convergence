@@ -7,10 +7,12 @@
 /data/raw_data
 /data/matrix_data
 /data/pair_data
+/data/_*_data
 
 ## ignore script
 hello.py
 untitled*.py
+_*.py
 
 ## using direcetory
 #/kiie-2017f/
