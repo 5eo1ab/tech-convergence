@@ -6,6 +6,7 @@ Created on Wed Jan 17 14:39:32 2018
 """
 
 import os
+#os.chdir("D:/Paper_2018/tech-convergence")
 import pandas as pd
 import numpy as np
 import gzip, pickle
@@ -68,8 +69,7 @@ class Matrix4Patent:
         csr_data = data.tocsr()
         if csr_data.shape[-1] == len(header):
             res_matrix = csr_data.transpose() * csr_data
-        else:
-            res_matrix = csr_data * csr_data.transpose()
+        else: res_matrix = csr_data * csr_data.transpose()
         norm_matrix = self.__get_association_strength__(res_matrix)
         print("shape of matrix CO = {}".format(res_matrix.shape))
         return {'header': header, 'data_raw': res_matrix.tocoo(), 'data_norm': norm_matrix.tocoo()}
@@ -77,6 +77,12 @@ class Matrix4Patent:
         diag_matrix = sps.diags(np.reciprocal(csr_matrix.diagonal().tolist(), dtype=np.float)).tocsr()
         res_matrix = diag_matrix * csr_matrix * diag_matrix
         return res_matrix
+
+    def set_matrix_pair(self):
+        for p_idx in range(1,4):
+            path_write = './data/matrix_data/matrix_pair_CO_p{}.pickle'
+            if os.path.exists(path_write): continue
+
 
 
 if __name__ == '__main__':

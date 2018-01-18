@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 print(os.getcwd())
-
+#os.chdir("D:/Paper_2018/tech-convergence")
 import json
 import mysql.connector
 import pandas as pd
