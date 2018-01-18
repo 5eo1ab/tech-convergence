@@ -13,8 +13,8 @@ import gzip, pickle
 from scipy import sparse as sps
 
 class Matrix4Patent:
-    def __init__(self):
-        self.__obj_unit__ = self.__get__obj_unit__()
+    def __init__(self, auto=False):
+        self.__obj_unit__ = 'group' if auto ==True else self.__get__obj_unit__()
     def __get__obj_unit__(self):
         import json
         DIC_UNIT = json.load(open('./data/digit-unit.json'))
@@ -22,16 +22,19 @@ class Matrix4Patent:
         print("object unit: {}, type: {}".format(DIC_UNIT[arg_value], type(DIC_UNIT[arg_value])))
         return DIC_UNIT[arg_value]
 
-    def get_matrix(self, matrix_type='W', period=1):
-        # matrix_type = 'W' | 'CO'
+    def get_matrix(self, period, matrix_type='CO'):
+        # matrix_type = 'W' | 'CO' | 'pair'
         path_read = './data/matrix_data/coo_matrix_{}_p{}.pickle'.format(matrix_type, period)
+        if matrix_type == 'pair':
+            path_read = './data/matrix_data/np_pair_CO_p{}.pickle'.format(period)
         if not os.path.exists(path_read):
             if matrix_type == 'W': self.set_matrix_W()
             elif matrix_type == 'CO': self.set_matrix_CO()
+            elif matrix_type == 'pair': self.set_matrix_pair_CO()
         with gzip.open(path_read, 'rb') as f:
             data = pickle.load(f)
-        shape_key = 'data' if matrix_type=='W' else 'data_raw'
-        print("shape of matrix {} = {}\nkey of dict: {}".format('W', data[shape_key].shape, data.keys()))
+        mat_key = 'data_raw' if matrix_type == 'CO' else 'data'
+        print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data[mat_key].shape, data.keys()))
         return data
 
     def set_matrix_W(self):
@@ -60,7 +63,7 @@ class Matrix4Patent:
         for p_idx in range(1,4):
             path_write = './data/matrix_data/coo_matrix_CO_p{}.pickle'.format(p_idx)
             if os.path.exists(path_write): continue
-            matrix_W = self.get_matrix(matrix_type='W', period=p_idx)
+            matrix_W = self.get_matrix(period=p_idx, matrix_type='W')
             with gzip.open(path_write, 'wb') as f:
                 pickle.dump(self.__get_CoOccuranceMatrix__(matrix_W['data'], matrix_W['column']), f)
             print("Set matrix CO, period={}".format(p_idx))
@@ -78,14 +81,25 @@ class Matrix4Patent:
         res_matrix = diag_matrix * csr_matrix * diag_matrix
         return res_matrix
 
-    def set_matrix_pair(self):
+    def set_matrix_pair_CO(self):
         for p_idx in range(1,4):
-            path_write = './data/matrix_data/matrix_pair_CO_p{}.pickle'
+            path_write = './data/matrix_data/np_pair_CO_p{}.pickle'.format(p_idx)
             if os.path.exists(path_write): continue
-
-
+            matrix = self.get_matrix(period=p_idx)
+            header = dict(zip(range(len(matrix['header'])), matrix['header'].tolist()))
+            pair = self.__get_matrix_pair(matrix['data_norm'])
+            with gzip.open(path_write, 'wb') as f:
+                pickle.dump({'data': pair, 'dict_header':header}, f)
+            print("Set pair CO, period={}".format(p_idx))
+            return None
+    def __get_matrix_pair(self, coo_matrix):
+        triu_data = sps.triu(coo_matrix, k=1)
+        res_pair = np.array([triu_data.row, triu_data.col, triu_data.data])
+        return res_pair.T
 
 if __name__ == '__main__':
-    matrix = Matrix4Patent()
+    matrix = Matrix4Patent(auto=True)
     matrix.set_matrix_W()
     matrix.set_matrix_CO()
+    matrix.set_matrix_pair_CO()
+
