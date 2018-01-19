@@ -14,7 +14,7 @@ from scipy import sparse as sps
 
 class Matrix4Patent:
     def __init__(self, auto=False):
-        self.__obj_unit__ = 'group' if auto ==True else self.__get__obj_unit__()
+        self.__obj_unit__ = 'group' if auto == True else self.__get__obj_unit__()
     def __get__obj_unit__(self):
         import json
         DIC_UNIT = json.load(open('./data/digit-unit.json'))
