@@ -56,7 +56,7 @@ class Matrix4Patent:
         rows, row_pos = np.unique(data[:, 0], return_inverse=True)
         cols, col_pos = np.unique(data[:, 1], return_inverse=True)
         pivot_data = sps.coo_matrix( ([1]*len(data),(row_pos, col_pos)), shape=(len(rows), len(cols)))
-        print("shape of matrix W = {}".format((len(rows), len(cols))))
+        print("shape of Occurance matrix = {}".format((len(rows), len(cols))))
         return {'data': pivot_data, 'index': rows, 'column': cols}
 
     def set_matrix_CO(self):
@@ -74,7 +74,7 @@ class Matrix4Patent:
             res_matrix = csr_data.transpose() * csr_data
         else: res_matrix = csr_data * csr_data.transpose()
         norm_matrix = self.__get_association_strength__(res_matrix)
-        print("shape of matrix CO = {}".format(res_matrix.shape))
+        print("shape of Co-Occurance matrix = {}".format(res_matrix.shape))
         return {'header': header, 'data_raw': res_matrix.tocoo(), 'data_norm': norm_matrix.tocoo()}
     def __get_association_strength__(self, csr_matrix):
         diag_matrix = sps.diags(np.reciprocal(csr_matrix.diagonal().tolist(), dtype=np.float)).tocsr()
@@ -97,9 +97,49 @@ class Matrix4Patent:
         res_pair = np.array([triu_data.row, triu_data.col, triu_data.data])
         return res_pair.T
 
+class Matrix4Citation(Matrix4Patent):
+    def __init__(self):
+        Matrix4Patent.__init__(self, auto=True)
+        self.t_patent = self.__import_dataset__('t_patent')
+        self.raw_t_citing = None
+    def __import_dataset__(self, table='t_citing'):
+        print("Read...{}".format(table))
+        if table == 't_patent':
+            from import_dataset_merging import lambda_split_period
+            t_patent = pd.read_csv('./data/raw_data/t_patent.csv')
+            t_patent['period'] = t_patent['issue_year'].apply(lambda_split_period)
+            return t_patent
+        else:
+            self.raw_t_citing = pd.read_csv('./data/raw_data/raw_t_citing.csv')
+            return None
+
+    def set_matrix_C(self):
+        for p_idx in range(1,4):
+            p_no_list = self.t_patent[self.t_patent['period'] == p_idx]['patent_no'].astype(str).tolist()
+            print("count of target patent: {}, period={}".format(len(p_no_list), p_idx))
+            path_write = './data/matrix_data/coo_matrix_Ced_p{}.pickle'.format(p_idx)
+            if not os.path.exists(path_write):
+                self.__set__matrix_C__(p_no_list, path_write, mode='ed')
+            path_write = './data/matrix_data/coo_matrix_Cing_p{}.pickle'.format(p_idx)
+            if not os.path.exists(path_write):
+                self.__set__matrix_C__(p_no_list, path_write, mode='ing')
+        return None
+    def __set__matrix_C__(self, patent_list, path_write, mode='ed'):
+        # mode = 'ed' | 'ing'
+        if self.raw_t_citing is None: self.__import_dataset__()
+        key_export = 'cited_patent_no' if mode == 'ed' else 'patent_no'
+        c_table = self.raw_t_citing[self.raw_t_citing[key_export].isin(patent_list)]
+        with gzip.open(path_write, 'wb') as f:
+            pickle.dump(self.__get_OccuranceMatrix__(c_table.values), f)
+        print("Set matrix C{}".format(mode))
+        return None
+
+
 if __name__ == '__main__':
     matrix = Matrix4Patent(auto=True)
     matrix.set_matrix_W()
     matrix.set_matrix_CO()
     matrix.set_matrix_pair_CO()
 
+    citation = Matrix4Citation()
+    citation.set_matrix_C()
