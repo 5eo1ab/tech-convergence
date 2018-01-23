@@ -22,7 +22,7 @@ class Matrix4Patent:
         print("object unit: {}, type: {}".format(DIC_UNIT[arg_value], type(DIC_UNIT[arg_value])))
         return DIC_UNIT[arg_value]
 
-    def get_matrix(self, period, matrix_type='CO'):  # matrix_type = 'W' | 'CO' | 'pair'
+    def get_matrix(self, period, matrix_type='CO'):  # matrix_type = 'W' | 'CO' | 'pair' | 'Ced' | 'Cing'
         path_read = './data/matrix_data/coo_matrix_{}_p{}.pickle'.format(matrix_type, period)
         if matrix_type == 'pair':
             path_read = './data/matrix_data/np_pair_CO_p{}.pickle'.format(period)
@@ -30,9 +30,10 @@ class Matrix4Patent:
             if matrix_type == 'W': self.set_matrix_W()
             elif matrix_type == 'CO': self.set_matrix_CO()
             elif matrix_type == 'pair': self.set_matrix_pair_CO()
+            else: return None
         with gzip.open(path_read, 'rb') as f:
             data = pickle.load(f)
-        mat_key = 'data_raw' if matrix_type == 'CO' else 'data'
+        mat_key = 'data_raw' if matrix_type in ['CO', 'CC', 'BC', 'CCp', 'BCp'] else 'data'
         print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data[mat_key].shape, data.keys()))
         return data
 
@@ -131,13 +132,37 @@ class Matrix4Citation(Matrix4Patent):
         if self.raw_t_citing is None: self.__import_dataset__()
         key_export = 'cited_patent_no' if mode == 'ed' else 'patent_no'
         c_table = self.raw_t_citing[self.raw_t_citing[key_export].isin(self.patent_list)]
+        c_table[key_export].astype(int)
         with gzip.open(path_write, 'wb') as f:
             pickle.dump(self.__get_OccuranceMatrix__(c_table.values), f)
         print("Set matrix C{}".format(mode))
         return None
 
+    def set_matrix_CCp_BCp(self):
+        for p_idx in range(1,4):
+            matrix_C = self.get_matrix(period=p_idx, matrix_type='Ced')
+            path_write = './data/matrix_data/coo_matrix_CCp_p{}.pickle'.format(p_idx) # CC by patent
+            if not os.path.exists(path_write):
+                with gzip.open(path_write, 'wb') as f:
+                    pickle.dump(self.__get_CoOccuranceMatrix__(matrix_C['data'], matrix_C['column']), f)
+                print("Set matrix CCp, period={}".format(p_idx))
+            matrix_C = self.get_matrix(period=p_idx, matrix_type='Cing')
+            path_write = './data/matrix_data/coo_matrix_BCp_p{}.pickle'.format(p_idx) # BC by patent
+            if not os.path.exists(path_write):
+                with gzip.open(path_write, 'wb') as f:
+                    pickle.dump(self.__get_CoOccuranceMatrix__(matrix_C['data'], matrix_C['index']), f)
+                print("Set matrix BCp, period={}".format(p_idx))
+        return None
+
+    def set_matrix(self):
+        return None
+
+    def __get_matrix_A__(self, period):
+        matrix_Ced = self.get_matrix(period, matrix_type='Ced')
+        matrix_W = self.get_matrix(period, matrix_type='W')
 
 if __name__ == '__main__':
+
     matrix = Matrix4Patent(auto=True)
     matrix.set_matrix_W()
     matrix.set_matrix_CO()
@@ -145,3 +170,4 @@ if __name__ == '__main__':
 
     citation = Matrix4Citation()
     citation.set_matrix_C()
+    citation.set_matrix_CCp_BCp()
