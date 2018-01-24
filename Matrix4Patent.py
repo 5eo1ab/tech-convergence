@@ -22,19 +22,25 @@ class Matrix4Patent:
         print("object unit: {}, type: {}".format(DIC_UNIT[arg_value], type(DIC_UNIT[arg_value])))
         return DIC_UNIT[arg_value]
 
-    def get_matrix(self, period, matrix_type='CO'):  # matrix_type = 'W' | 'CO' | 'pair' | 'Ced' | 'Cing'
+    def get_matrix(self, period, matrix_type='CO', is_pair=False):  # matrix_type = 'W' | 'CO' | 'Ced' | 'Cing'
         path_read = './data/matrix_data/coo_matrix_{}_p{}.pickle'.format(matrix_type, period)
-        if matrix_type == 'pair':
-            path_read = './data/matrix_data/np_pair_CO_p{}.pickle'.format(period)
+        if is_pair == True:
+            path_read = './data/pair_data/np_pair_{}_p{}.pickle'.format(matrix_type, period)
+        #if matrix_type == 'pair': path_read = './data/matrix_data/np_pair_CO_p{}.pickle'.format(period)
         if not os.path.exists(path_read):
-            if matrix_type == 'W': self.set_matrix_W()
-            elif matrix_type == 'CO': self.set_matrix_CO()
-            elif matrix_type == 'pair': self.set_matrix_pair_CO()
-            else: return None
+            if is_pair == False:
+                if matrix_type == 'W': self.set_matrix_W()
+                elif matrix_type == 'CO': self.set_matrix_CO()
+                else: return None
+            else:
+                if matrix_type == 'CO': self.set_matrix_pair_CO()
+                else: return None
         with gzip.open(path_read, 'rb') as f:
             data = pickle.load(f)
-        mat_key = 'data_raw' if matrix_type in ['CO', 'CC', 'BC', 'CCp', 'BCp'] else 'data'
-        print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data[mat_key].shape, data.keys()))
+        if 'data' not in data.keys():
+            print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data['data_norm'].shape, data.keys()))
+        else:
+            print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data['data'].shape, data.keys()))
         return data
 
     def set_matrix_W(self):
@@ -82,16 +88,19 @@ class Matrix4Patent:
         return res_matrix
 
     def set_matrix_pair_CO(self):
+        if not os.path.exists('./data/pair_data'):
+            os.mkdir('./data/pair_data')
         for p_idx in range(1,4):
-            path_write = './data/matrix_data/np_pair_CO_p{}.pickle'.format(p_idx)
+            path_write = './data/pair_data/np_pair_CO_p{}.pickle'.format(p_idx)
             if os.path.exists(path_write): continue
             matrix = self.get_matrix(period=p_idx)
-            header = dict(zip(range(len(matrix['header'])), matrix['header'].tolist()))
+            header = dict(enumerate(matrix['header']))
+            #header2index = dict((v,k) for k,v in header.items())
             pair = self.__get_matrix_pair__(matrix['data_norm'])
             with gzip.open(path_write, 'wb') as f:
                 pickle.dump({'data': pair, 'dict_header':header}, f)
             print("Set pair CO, period={}".format(p_idx))
-            return None
+        return None
     def __get_matrix_pair__(self, coo_matrix):
         triu_data = sps.triu(coo_matrix, k=1)
         res_pair = np.array([triu_data.row, triu_data.col, triu_data.data])
@@ -168,6 +177,6 @@ if __name__ == '__main__':
     matrix.set_matrix_CO()
     matrix.set_matrix_pair_CO()
 
-    citation = Matrix4Citation()
-    citation.set_matrix_C()
-    citation.set_matrix_CCp_BCp()
+    #citation = Matrix4Citation()
+    #citation.set_matrix_C()
+    #citation.set_matrix_CCp_BCp()
