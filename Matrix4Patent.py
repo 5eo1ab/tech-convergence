@@ -163,12 +163,34 @@ class Matrix4Citation(Matrix4Patent):
                 print("Set matrix BCp, period={}".format(p_idx))
         return None
 
-    def set_matrix(self):
+    def set_matrix_CC_BC(self):
         return None
 
-    def __get_matrix_A__(self, period):
+    def set_matrix_A(self, period):
+        path_write = './data/matrix_data/coo_matrix_A_p{}.pickle'
+        if os.path.exists(path_write): return None
         matrix_Ced = self.get_matrix(period, matrix_type='Ced')
+        csc_Ced = matrix_Ced['data'].tocsc()
+        set_patCed = set(matrix_Ced['column'].astype(int))
+        dict_pat2idxCed = dict((p, i) for i, p in enumerate(matrix_Ced['column'].astype(int)))
+
         matrix_W = self.get_matrix(period, matrix_type='W')
+        dict_idx2patW = dict(enumerate(matrix_W['index']))
+        np_data, np_row, np_col, size = np.array([]), np.array([]), np.array([]), len(dict_idx2patW)
+        for idx_w, pat_no in dict_idx2patW.items():
+            if pat_no not in set_patCed: continue
+            col_vec = csc_Ced.getcol(dict_pat2idxCed[pat_no])
+            np_data = np.append(np_data, col_vec.data)
+            np_row = np.append(np_row, col_vec.indices)
+            np_col = np.append(np_col, np.array([idx_w] * col_vec.indptr[-1]))
+            print("{}/{}, p={}".format(idx_w + 1, size, period))
+        csr_Ced_resize = sps.csr_matrix((np_data, (np_row, np_col)), dtype=int)
+        print(csr_Ced_resize.shape, matrix_W.shape)
+        csr_A = csr_Ced_resize * matrix_W
+        with gzip.open(path_write, 'wb') as f:
+            pickle.dump({'data': csr_A.tocoo(), 'index': matrix_Ced['index'], 'column': matrix_W['column']}, f)
+        print("Set matrix A, period={}".format(period))
+
 
 if __name__ == '__main__':
 

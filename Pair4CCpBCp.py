@@ -64,7 +64,8 @@ class Pair4:
         return pair_CC, dict_key_CC
 
     def run(self):
-        path_write = "./data/pair_data/np_pair_{}_p{}.pickle".format(self.matrix_type, self.period)
+        #path_write = "./data/pair_data/np_pair_{}_p{}.pickle".format(self.matrix_type, self.period)
+        path_write = "./data/pair_data/TMP_dict_{}_p{}.pickle".format(self.matrix_type, self.period)
         if os.path.exists(path_write): return None
 
         from itertools import product
@@ -79,6 +80,10 @@ class Pair4:
                 else: self.dict_coor[(pair[-1], pair[0])] += row[-1]
             print("{}/{}\t(p, mt)=({}, {})".format(i+1, size, self.period, self.matrix_type))
 
+        with gzip.open(path_write, 'wb') as f:
+            pickle.dump(self.dict_coor, f)
+
+        """
         res_pair = df.from_dict(self.dict_coor, orient='index')
         res_pair['coor'] = res_pair.index.values
         res_pair['x'], res_pair['y'] = res_pair['coor'].apply(lambda v: v[0]), res_pair['coor'].apply(lambda v: v[-1])
@@ -86,7 +91,7 @@ class Pair4:
 
         with gzip.open(path_write, 'wb') as f:
             pickle.dump({'data': res_pair.values, 'dict_header': self.idx2unit}, f)
-
+        """
 if __name__ == '__main__':
     for p_idx in range(1,4):
         p4CCp = Pair4(period=p_idx, matrix_type='CCp')
