@@ -37,10 +37,13 @@ class Matrix4Patent:
                 else: return None
         with gzip.open(path_read, 'rb') as f:
             data = pickle.load(f)
-        if 'data' not in data.keys():
-            print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data['data_norm'].shape, data.keys()))
+        if is_pair == True:
+            print("shape of pair {} = {}\nkey of dict: {}".format(matrix_type, data['data'].shape, data.keys()))
         else:
-            print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data['data'].shape, data.keys()))
+            if 'data' not in data.keys():
+                print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data['data_norm'].shape, data.keys()))
+            else:
+                print("shape of matrix {} = {}\nkey of dict: {}".format(matrix_type, data['data'].shape, data.keys()))
         return data
 
     def set_matrix_W(self):
@@ -87,11 +90,11 @@ class Matrix4Patent:
         res_matrix = diag_matrix * csr_matrix * diag_matrix
         return res_matrix
 
-    def set_matrix_pair_CO(self):
+    def set_matrix_pair(self, matrix_type='CO'):
         if not os.path.exists('./data/pair_data'):
             os.mkdir('./data/pair_data')
         for p_idx in range(1,4):
-            path_write = './data/pair_data/np_pair_CO_p{}.pickle'.format(p_idx)
+            path_write = './data/pair_data/np_pair_{}_p{}.pickle'.format(matrix_type, p_idx)
             if os.path.exists(path_write): continue
             matrix = self.get_matrix(period=p_idx)
             header = dict(enumerate(matrix['header']))
@@ -164,16 +167,29 @@ class Matrix4Citation(Matrix4Patent):
         return None
 
     def set_matrix_CC_BC(self):
+        for p_idx in range(1,4):
+            path_write = './data/matrix_data/coo_matrix_CC_p{}.pickle'.format(p_idx)
+            if not os.path.exists(path_write):
+                matrix_A = self.get_matrix(period=p_idx, matrix_type='A')
+                with gzip.open(path_write, 'wb') as f:
+                    pickle.dump(self.__get_CoOccuranceMatrix__(matrix_A['data'], matrix_A['column']), f)
+                print("Set matrix CC, period={}".format(p_idx))
+            path_write = './data/matrix_data/coo_matrix_BC_p{}.pickle'.format(p_idx)
+            if not os.path.exists(path_write):
+                matrix_B = self.get_matrix(period=p_idx, matrix_type='B')
+                if matrix_B is None: continue
+                with gzip.open(path_write, 'wb') as f:
+                    pickle.dump(self.__get_CoOccuranceMatrix__(matrix_B['data'], matrix_B['index']), f)
+                print("Set matrix BC, period={}".format(p_idx))
         return None
 
     def set_matrix_A(self, period):
-        path_write = './data/matrix_data/coo_matrix_A_p{}.pickle'
+        path_write = './data/matrix_data/coo_matrix_A_p{}.pickle'.format(period)
         if os.path.exists(path_write): return None
         matrix_Ced = self.get_matrix(period, matrix_type='Ced')
         csc_Ced = matrix_Ced['data'].tocsc()
         set_patCed = set(matrix_Ced['column'].astype(int))
         dict_pat2idxCed = dict((p, i) for i, p in enumerate(matrix_Ced['column'].astype(int)))
-
         matrix_W = self.get_matrix(period, matrix_type='W')
         dict_idx2patW = dict(enumerate(matrix_W['index']))
         np_data, np_row, np_col, size = np.array([]), np.array([]), np.array([]), len(dict_idx2patW)
@@ -184,21 +200,51 @@ class Matrix4Citation(Matrix4Patent):
             np_row = np.append(np_row, col_vec.indices)
             np_col = np.append(np_col, np.array([idx_w] * col_vec.indptr[-1]))
             print("{}/{}, p={}".format(idx_w + 1, size, period))
-        csr_Ced_resize = sps.csr_matrix((np_data, (np_row, np_col)), dtype=int)
-        print(csr_Ced_resize.shape, matrix_W.shape)
-        csr_A = csr_Ced_resize * matrix_W
+        csr_Ced_rs = sps.csr_matrix((np_data, (np_row, np_col)), dtype=int, shape=(len(matrix_Ced['index']), size))
+        print(csr_Ced_rs.shape, matrix_W['data'].shape)
+        csr_A = csr_Ced_rs * matrix_W['data'].tocsr()
+        print(csr_A.shape)
         with gzip.open(path_write, 'wb') as f:
             pickle.dump({'data': csr_A.tocoo(), 'index': matrix_Ced['index'], 'column': matrix_W['column']}, f)
         print("Set matrix A, period={}".format(period))
+        return None
 
+    def set_matrix_B(self, period):
+        path_write = './data/matrix_data/coo_matrix_B_p{}.pickle'.format(period)
+        if os.path.exists(path_write): return None
+        matrix_Cing = self.get_matrix(period, matrix_type='Cing')
+        csr_Cing = matrix_Cing['data'].tocsr()
+        set_patCing = set(matrix_Cing['index'])
+        dict_pat2idxCing = dict((p, i) for i, p in enumerate(matrix_Cing['index']))
+
+        matrix_W = self.get_matrix(period, matrix_type='W')
+        dict_idx2patW = dict(enumerate(matrix_W['index']))
+        np_data, np_row, np_col, size = np.array([]), np.array([]), np.array([]), len(dict_idx2patW)
+        for idx_w, pat_no in dict_idx2patW.items():
+            if pat_no not in set_patCing: continue
+            row_vec = csr_Cing.getrow(dict_pat2idxCing[pat_no])
+            np_data = np.append(np_data, row_vec.data)
+            np_row = np.append(np_row, [idx_w] * row_vec.indptr[-1])
+            np_col = np.append(np_col, row_vec.indices)
+            print("{}/{}, p={}".format(idx_w + 1, size, period))
+        csr_Cing_rs = sps.csr_matrix((np_data, (np_row, np_col)), dtype=int, shape=(size, len(matrix_Cing['column'])))
+        print(matrix_W['data'].transpose().shape, csr_Cing_rs.shape)
+        csr_B = matrix_W['data'].transpose().tocsr() * csr_Cing_rs
+        print(csr_B.shape)
+        with gzip.open(path_write, 'wb') as f:
+            pickle.dump({'data': csr_B.tocoo(), 'index': matrix_W['column'], 'column': matrix_Cing['column']}, f)
+        print("Set matrix B, period={}".format(period))
 
 if __name__ == '__main__':
 
     matrix = Matrix4Patent(auto=True)
     matrix.set_matrix_W()
     matrix.set_matrix_CO()
-    matrix.set_matrix_pair_CO()
+    matrix.set_matrix_pair()
 
-    #citation = Matrix4Citation()
+    citation = Matrix4Citation()
     #citation.set_matrix_C()
     #citation.set_matrix_CCp_BCp()
+    #citation.set_matrix_CC_BC()
+    citation.set_matrix_pair(matrix_type='CC')
+    #citation.set_matrix_pair(matrix_type='BC')

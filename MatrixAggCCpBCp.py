@@ -10,14 +10,15 @@ import os
 import numpy as np
 from pandas import DataFrame as df
 import gzip, pickle
+from scipy import sparse as sps
 
 from Matrix4Patent import Matrix4Citation
-class Pair4:
+class Pair4CCpBCp:
     def __init__(self, period=None, matrix_type=None):
         self.period = self.__get_period__() if period is None else period
         self.matrix_type = self.__get_matrix_type__() if matrix_type is None else matrix_type
         self.idx2unit, self.unit2idx, self.dict_coor = self.__get_dict4idx__()
-        self.__matrix_W__ = self.__get_df_matrix_W__()
+        self.__matrix_W__ = None
         self.pair, self.idx2pat = self.__get_pair_and_Index2PatentNo__()
 
     def __get_period__(self):
@@ -67,7 +68,7 @@ class Pair4:
         #path_write = "./data/pair_data/np_pair_{}_p{}.pickle".format(self.matrix_type, self.period)
         path_write = "./data/pair_data/TMP_dict_{}_p{}.pickle".format(self.matrix_type, self.period)
         if os.path.exists(path_write): return None
-
+        self.__matrix_W__ = self.__get_df_matrix_W__()
         from itertools import product
         size = len(self.pair)
         for i, row in enumerate(self.pair):
@@ -79,22 +80,38 @@ class Pair4:
                 if pair[0] < pair[-1]: self.dict_coor[pair] += row[-1]
                 else: self.dict_coor[(pair[-1], pair[0])] += row[-1]
             print("{}/{}\t(p, mt)=({}, {})".format(i+1, size, self.period, self.matrix_type))
-
         with gzip.open(path_write, 'wb') as f:
             pickle.dump(self.dict_coor, f)
+        return None
 
-        """
-        res_pair = df.from_dict(self.dict_coor, orient='index')
-        res_pair['coor'] = res_pair.index.values
-        res_pair['x'], res_pair['y'] = res_pair['coor'].apply(lambda v: v[0]), res_pair['coor'].apply(lambda v: v[-1])
-        res_pair = res_pair[res_pair[res_pair.columns[0]>0]][['x', 'y', res_pair.cloumns[0]]].sort_values(by=['x', 'y'])
+    def reshape(self):
+        path_write = './data/pair_data/np_pair_{}_p{}.pickle'.format(self.matrix_type, self.period)
+        if os.path.exists(path_write): return None
+        dict_pair, path_read = None, './data/pair_data/TMP_dict_{}_p{}.pickle'.format(self.matrix_type, self.period)
+        if not os.path.exists(path_read): self.run()
+        with gzip.open(path_read, 'rb') as f:
+            dict_pair = pickle.load(f)
+        print("Read TEMP dict_{}, period={},\nsize of dict: {}".format(self.matrix_type, self.period, len(dict_pair)))
+
+        df_pair = df.from_dict(dict_pair, orient='index')
+        df_pair['coor'] = df_pair.index.values
+        df_pair['x'] = df_pair['coor'].apply(lambda c: c[0])
+        df_pair['y'] = df_pair['coor'].apply(lambda c: c[-1])
+        val_col_nm = df_pair.columns[0]
+        df_pair = df_pair[df_pair[val_col_nm] > 0][['x', 'y', val_col_nm]].sort_values(by=['x', 'y'])
+        print("result shape of pair: {}".format(df_pair.shape))
 
         with gzip.open(path_write, 'wb') as f:
-            pickle.dump({'data': res_pair.values, 'dict_header': self.idx2unit}, f)
-        """
+            #pickle.dump({'data': mc.__get_matrix_pair__(coo_mat), 'dict_header': self.idx2unit}, f)
+            pickle.dump({'data': df_pair.values, 'dict_header': self.idx2unit}, f)
+        print("Set pair {}, period={}".format(self.matrix_type, self.period))
+        print("="*25)
+
 if __name__ == '__main__':
     for p_idx in range(1,4):
-        p4CCp = Pair4(period=p_idx, matrix_type='CCp')
-        p4CCp.run()
-        p4BCp = Pair4(period=p_idx, matrix_type='BCp')
-        p4BCp.run()
+        p4CCp = Pair4CCpBCp(period=p_idx, matrix_type='CCp')
+        #p4CCp.run()
+        p4CCp.reshape()
+        p4BCp = Pair4CCpBCp(period=p_idx, matrix_type='BCp')
+        #p4BCp.run()
+        p4BCp.reshape()
