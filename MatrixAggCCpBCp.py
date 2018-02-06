@@ -106,12 +106,46 @@ class Pair4CCpBCp:
             pickle.dump({'data': df_pair.values, 'dict_header': self.idx2unit}, f)
         print("Set pair {}, period={}".format(self.matrix_type, self.period))
         print("="*25)
+        return None
+
+    def normalization(self):
+        path_io = './data/pair_data/np_pair_{}_p{}.pickle'.format(self.matrix_type, self.period)
+        if not os.path.exists(path_io): self.reshape()
+        data_read, data_write, new_key_nm = None, dict(), 'dict_count'
+        with gzip.open(path_io, 'rb') as f:
+            data_read = pickle.load(f)
+        if new_key_nm in data_read.keys(): return None
+        print("Key of dict: {}".format(data_read.keys()))
+        print("Shape of data: {}".format(data_read['data'].shape))
+
+        df_data = df(data_read['data'], columns=['x', 'y', 'c_ij'])
+        data_write[new_key_nm], res_arr = dict(), list()
+        for idx in data_read['dict_header'].keys():
+            cnt = df_data[df_data['x']==idx].append(df_data[df_data['y']==idx])['c_ij'].sum()
+            if cnt > 0: data_write[new_key_nm][idx] = cnt
+        for i, j, c_ij in df_data.values:
+            ww = data_write[new_key_nm][i] * data_write[new_key_nm][j]
+            res_arr.append(c_ij/ww)
+        df_data['norm'] = res_arr
+
+        data_write['data'] = df_data.values
+        data_write['dict_header'], data_write['data_raw'] = data_read['dict_header'], data_read['data']
+        print("Key of dict: {}".format(data_write.keys()))
+        print("Shape of data: {}".format(data_write['data'].shape))
+
+        with gzip.open(path_io, 'wb') as f:
+            pickle.dump(data_write, f)
+        print("Set pair {} with Association Strength, period={}".format(self.matrix_type, self.period))
+        print("=" * 25)
+        return None
 
 if __name__ == '__main__':
     for p_idx in range(1,4):
         p4CCp = Pair4CCpBCp(period=p_idx, matrix_type='CCp')
         #p4CCp.run()
-        p4CCp.reshape()
+        #p4CCp.reshape()
+        p4CCp.normalization()
         p4BCp = Pair4CCpBCp(period=p_idx, matrix_type='BCp')
         #p4BCp.run()
-        p4BCp.reshape()
+        #p4BCp.reshape()
+        p4BCp.normalization()

@@ -102,7 +102,7 @@ class Matrix4Patent:
             pair = self.__get_matrix_pair__(matrix['data_norm'])
             with gzip.open(path_write, 'wb') as f:
                 pickle.dump({'data': pair, 'dict_header':header}, f)
-            print("Set pair CO, period={}".format(p_idx))
+            print("Set pair {}, period={}".format(matrix_type, p_idx))
         return None
     def __get_matrix_pair__(self, coo_matrix):
         triu_data = sps.triu(coo_matrix, k=1)
@@ -245,6 +245,6 @@ if __name__ == '__main__':
     citation = Matrix4Citation()
     #citation.set_matrix_C()
     #citation.set_matrix_CCp_BCp()
-    #citation.set_matrix_CC_BC()
+    citation.set_matrix_CC_BC()
     citation.set_matrix_pair(matrix_type='CC')
-    #citation.set_matrix_pair(matrix_type='BC')
+    citation.set_matrix_pair(matrix_type='BC')
