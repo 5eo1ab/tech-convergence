@@ -248,3 +248,4 @@ if __name__ == '__main__':
     citation.set_matrix_CC_BC()
     citation.set_matrix_pair(matrix_type='CC')
     citation.set_matrix_pair(matrix_type='BC')
+
