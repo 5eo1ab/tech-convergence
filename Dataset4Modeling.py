@@ -45,6 +45,7 @@ class Dataset4Modeling:
         if not os.path.exists('/'.join(path_write.split('/')[:-1])): os.mkdir('/'.join(path_write.split('/')[:-1]))
         if os.path.exists(path_write): return None
         res_data = self.__get_target_variable__()
+        if res_data == None: return None
         res_dict = {'data':res_data[:,-1], 'index_pair': res_data[:,:2], 'dict_header':self.dict_header}
         with gzip.open(path_write, 'wb') as f:
             pickle.dump(res_dict, f)
@@ -154,6 +155,7 @@ if __name__ == '__main__':
 
     for p_idx in [1,2,3]:
         for c_p in [5, 10, 20]:
+            print("Period={}\tCutoff percent={}%".format(p_idx, c_p))
             builder = Dataset4Modeling(p_idx, c_p)
             builder.set_target_variable()
             builder.set_input_variable()

@@ -27,4 +27,4 @@ _*.py
 /kiie-2017f/*.pickle
 /kiie-2017f/*.json
 /data/groupby_data/*.xlsx
-
+/data/*.zip
