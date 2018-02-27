@@ -44,8 +44,8 @@ class Dataset4Modeling:
         path_write = './data/model_data/np_pair_target_p{}_c{}.pickle'.format(self.period, self.cutoff)
         if not os.path.exists('/'.join(path_write.split('/')[:-1])): os.mkdir('/'.join(path_write.split('/')[:-1]))
         if os.path.exists(path_write): return None
+        if self.period > 2: return None
         res_data = self.__get_target_variable__()
-        if res_data == None: return None
         res_dict = {'data':res_data[:,-1], 'index_pair': res_data[:,:2], 'dict_header':self.dict_header}
         with gzip.open(path_write, 'wb') as f:
             pickle.dump(res_dict, f)
@@ -76,11 +76,12 @@ class Dataset4Modeling:
         #print(df_merge.head(), "\nShape of DataFrame: {}".format(df_merge.shape))
         col_nm = df_merge.columns.tolist()[df_merge.columns.tolist().index('y_lb') + 1:]
         res_dict = {'data': df_merge[col_nm].values, 'data_norm': None,
+                    'columns': col_nm,
                     'index_pair': df_merge[df_merge.columns[:2]].values, 'dict_header': self.dict_header}
         from sklearn.preprocessing import MinMaxScaler
         scaler = MinMaxScaler()
         res_dict['data_norm'] = scaler.fit_transform(res_dict['data'])
-        with open(path_write, 'wb') as f:
+        with gzip.open(path_write, 'wb') as f:
             pickle.dump(res_dict, f)
         print("Shape of Input Data: {}".format(df_merge[col_nm].shape))
         return None
@@ -154,7 +155,7 @@ class NetworkVariable:
 if __name__ == '__main__':
 
     for p_idx in [1,2,3]:
-        for c_p in [5, 10, 20]:
+        for c_p in [15, 25]:#[5, 10, 20]:
             print("Period={}\tCutoff percent={}%".format(p_idx, c_p))
             builder = Dataset4Modeling(p_idx, c_p)
             builder.set_target_variable()

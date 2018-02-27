@@ -8,6 +8,7 @@
 /data/matrix_data
 /data/pair_data
 /data/_*_data
+/data/model_data
 
 ## ignore script
 hello.py
