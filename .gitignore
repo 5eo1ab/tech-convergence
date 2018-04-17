@@ -10,6 +10,8 @@
 /data/_*_data
 /data/model_data
 /data/gephi_data
+/data/result_pred_data
+/tmp
 
 ## ignore script
 hello.py
