@@ -9,6 +9,7 @@
 /data/pair_data
 /data/_*_data
 /data/model_data
+/data/gephi_data
 
 ## ignore script
 hello.py
